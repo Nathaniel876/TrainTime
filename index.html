@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Train Scheduler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="assets/css/style.css" />
+    <script src="assets/javascript/app.js"></script>
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Bootstrap CDN-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+    <!-- Firebase Reference -->
+    <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="jumbotron jumbotron-fluid">
+            <div class="containerfluid ">
+                <h1 class="display-3">ITS RAIL TIME</h1>
+                <p class="lead">LET GOOOOOOO!!!!!</p>
+            </div>
+        </div>
+    </div>
+    <div class="containerfluid ">
+        <div class="card train-schedule">
+            <div class="card-header">Current Train Schedule</div>
+            <div class="train-info">
+                <table class="notice">
+                    <tbody>
+                        <tr>
+                            <th>Train Name</th>
+                            <th>Destination</th>
+                            <th>Frequency (min)</th>
+                            <th>Next Arrival</th>
+                            <th>Minutes Away</th>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="containerfluid ">
+        <div class="card add-train">
+            <div class="card-header">Add train</div>
+            <div class="form">
+                <form id="addTrain-form">
+                    <label for="trainName-label">Train Name</label><br>
+                    <input type="text" id="trainName-text" class="infoInput-text" value=""><br>
+                    <label for="Destination-label">Destination</label><br>
+                    <input type="text" id="destination-text" class="infoInput-text" value=""><br>
+                    <label for="firstTrainTime-label">First Train Time</label><br>
+                    <input type="time" id="firstTrainTime" class="infoInput-text" value=""><br>
+                    <label for="freq">Frequency (min)</label><br>
+                    <input type="number" id="frequency" class="infoInput-text" value=""><br>
+                    <button class="btn btn-lg submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.1/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.1/firebase.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyBDNMVJpNMDbiRW2NV8A2mtyKjniqK7DaM",
+            authDomain: "fire-base-it.firebaseapp.com",
+            databaseURL: "https://fire-base-it.firebaseio.com",
+            projectId: "fire-base-it",
+            storageBucket: "fire-base-it.appspot.com",
+            messagingSenderId: "758917252005"
+        };
+        firebase.initializeApp(config);
+
+        var database = firebase.database();
+
+        var trainsInfo = database.ref("/trainsInfo");
+
+        var currentTime = moment().format("HH:mm")
+        var currentHours = moment().format('HH')
+        var currentMins = moment().format('mm')
+
+
+
+        trainsInfo.on("child_added", function (snapankle) {
+
+            var svTrain = snapankle.val().train;
+            var svDestin = snapankle.val().destination;
+            var svFirstTime = snapankle.val().firstTrainTime;
+            var svFreq = snapankle.val().frequency;
+
+            var svHours = moment(svFirstTime, "HH:mm").format('HH')
+            var svMins = moment(svFirstTime, "HH:mm").format('mm')
+            var svTimeConverted = moment(svFirstTime, "HH:mm").format("hh:mm A")
+
+            console.log(svHours)
+            console.log(svMins)
+
+            var hourDiff = svHours - currentHours
+            var minsDiff = svMins - currentMins
+            var timeDiff = hourDiff * 60 + minsDiff
+            if (timeDiff < 0) {
+                timeDiff = (-1 * timeDiff) % svFreq
+                console.log(timeDiff)
+                var newTime = moment().add(timeDiff, 'minutes').format("hh:mm A");
+                console.log('the new time is: ' + newTime)
+
+                svFirstTime = newTime;
+            } else {
+                svFirstTime = svTimeConverted
+            }
+            console.log('time diff in mins: ' + timeDiff)
+            // var minutesAway = 
+
+
+            console.log(svTrain);
+            console.log(svDestin);
+            console.log(svFirstTime);
+            console.log(svFreq);
+
+            var tableRow = $('<tr>');
+            tableRow.append('<td>' + svTrain + '</td>');
+            tableRow.append('<td>' + svDestin + '</td>');
+            tableRow.append('<td>' + svFreq + '</td>');
+            tableRow.append('<td>' + svFirstTime + '</td>');
+            tableRow.append('<td>' + timeDiff + '</td>');
+            $('tbody').append(tableRow)
+        })
+
+        $(".submit").on('click', function (event) {
+
+
+            event.preventDefault();
+
+            var train = $('#trainName-text').val().trim();
+            var destin = $("#destination-text").val().trim();
+            var firstTime = $("#firstTrainTime").val().trim();
+            var freq = parseInt($("#frequency").val().trim());
+
+            var trainObject = {
+                train: train,
+                destination: destin,
+                firstTrainTime: firstTime,
+                frequency: freq
+
+            }
+
+            trainsInfo.push(trainObject);
+
+        });
+
+
+    </script>
+
+</body>
+
+</html>
